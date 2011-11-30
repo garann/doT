@@ -21,6 +21,11 @@
 	doT.templateSettings = {
 		evaluate:    /\{\{([\s\S]+?)\}\}/g,
 		interpolate: /\{\{=([\s\S]+?)\}\}/g,
+		conditional: /\{\{if\s([\S]+)\}\}/g,
+		conditional_else: /\{\{else([\s\S]+?)\}\}/g,
+		conditional_end: /\{\{\/if\}\}/g,
+		loop: 		 /\{\{each\s([\S]+)\sin\s([\S]+)\}\}/g,
+		loop_end: 	 /\{\{\/each\}\}/g,
 		encode:      /\{\{!([\s\S]+?)\}\}/g,
 		use:         /\{\{#([\s\S]+?)\}\}/g, //compile time evaluation
 		define:      /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g, //compile time defs
@@ -55,6 +60,8 @@
 		var cstart = c.append ? "'+(" : "';out+=(", // optimal choice depends on platform/size of templates
 		    cend   = c.append ? ")+'" : ");out+='";
 		var str = (c.use || c.define) ? resolveDefs(c, tmpl, def || {}) : tmpl;
+		var its = ["i","j","k","ii","jj","kk","ij","ik","ji","jk","ki","kj"],
+			loop_depth = 0;
 
 		str = ("var out='" +
 			((c.strip) ? str.replace(/\s*<!\[CDATA\[\s*|\s*\]\]>\s*|[\r\n\t]|(\/\*[\s\S]*?\*\/)/g, ''): str)
@@ -63,10 +70,34 @@
 			.replace(c.interpolate, function(match, code) {
 				return cstart + code.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ') + cend;
 			})
+			.replace(c.conditional, function(match, code) {
+				return "';if (" + code.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ') + ") { out+='";
+			})
+			.replace(c.conditional_else, function(match, code) {
+				if (code)
+					return "'; } else if (" + code.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ') + ") { out+='";
+				else
+					return "'; } else { out+='";
+			})
+			.replace(c.conditional_end, function(match) {
+				return "'; }  out+='";
+			})
+			.replace(c.loop, function(match, varname, code) {
+				var it = its[loop_depth++];
+				varname = varname.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ');
+				code = code.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ');
+				return "';for (var "+it+"=0;i<"+code+".length;"+it+"++) { var " + varname + "=" + code + "[" + it + "]; out+='";
+			})
+			.replace(c.loop_end, function(match) {
+				loop_depth--;
+				return "'; }  out+='";
+			})
 			.replace(c.encode, function(match, code) {
 				return cstart + code.replace(/\\'/g, "'").replace(/\\\\/g, "\\").replace(/[\r\t\n]/g, ' ') + ").toString().replace(/&(?!\\w+;)/g, '&#38;').split('<').join('&#60;').split('>').join('&#62;').split('" + '"' + "').join('&#34;').split(" + '"' + "'" + '"' + ").join('&#39;').split('/').join('&#47;'" + cend;
 			})
 			.replace(c.evaluate, function(match, code) {
+				console.log("found eval: " + code);
+				
 				return "';" + code.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ') + "out+='";
 			})
 			+ "';return out;")
