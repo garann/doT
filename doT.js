@@ -22,7 +22,7 @@
 		evaluate:    /\{\{([\s\S]+?)\}\}/g,
 		interpolate: /\{\{=([\s\S]+?)\}\}/g,
 		conditional: /\{\{if\s([\S]+)\}\}/g,
-		conditional_else: /\{\{else([\s\S]+?)\}\}/g,
+		conditional_else: /\{\{else([^\}]+)?\}\}/g,
 		conditional_end: /\{\{\/if\}\}/g,
 		loop: 		 /\{\{each\s([\S]+)\sin\s([\S]+)\}\}/g,
 		loop_end: 	 /\{\{\/each\}\}/g,
@@ -96,8 +96,6 @@
 				return cstart + code.replace(/\\'/g, "'").replace(/\\\\/g, "\\").replace(/[\r\t\n]/g, ' ') + ").toString().replace(/&(?!\\w+;)/g, '&#38;').split('<').join('&#60;').split('>').join('&#62;').split('" + '"' + "').join('&#34;').split(" + '"' + "'" + '"' + ").join('&#39;').split('/').join('&#47;'" + cend;
 			})
 			.replace(c.evaluate, function(match, code) {
-				console.log("found eval: " + code);
-				
 				return "';" + code.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ') + "out+='";
 			})
 			+ "';return out;")
