@@ -86,7 +86,7 @@
 				var it = its[loop_depth++];
 				varname = varname.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ');
 				code = code.replace(/\\'/g, "'").replace(/\\\\/g,"\\").replace(/[\r\t\n]/g, ' ');
-				return "';for (var "+it+"=0;i<"+code+".length;"+it+"++) { var " + varname + "=" + code + "[" + it + "]; out+='";
+				return "';for (var "+it+"=0;"+it+"<"+code+".length;"+it+"++) { var " + varname + "=" + code + "[" + it + "]; out+='";
 			})
 			.replace(c.loop_end, function(match) {
 				loop_depth--;
